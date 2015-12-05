@@ -1,0 +1,401 @@
+\documentclass[]{article}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\usepackage{fixltx2e} % provides \textsubscript
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+\else % if luatex or xelatex
+  \ifxetex
+    \usepackage{mathspec}
+    \usepackage{xltxtra,xunicode}
+  \else
+    \usepackage{fontspec}
+  \fi
+  \defaultfontfeatures{Mapping=tex-text,Scale=MatchLowercase}
+  \newcommand{\euro}{€}
+\fi
+% use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+% use microtype if available
+\IfFileExists{microtype.sty}{%
+\usepackage{microtype}
+\UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+\ifxetex
+  \usepackage[setpagesize=false, % page size defined by xetex
+              unicode=false, % unicode breaks when used with xetex
+              xetex]{hyperref}
+\else
+  \usepackage[unicode=true]{hyperref}
+\fi
+\hypersetup{breaklinks=true,
+            bookmarks=true,
+            pdfauthor={},
+            pdftitle={Predicting Restaurant Failure Using Yelp Data},
+            colorlinks=true,
+            citecolor=blue,
+            urlcolor=blue,
+            linkcolor=magenta,
+            pdfborder={0 0 0}}
+\urlstyle{same}  % don't use monospace font for urls
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt plus 2pt minus 1pt}
+\setlength{\emergencystretch}{3em}  % prevent overfull lines
+\setcounter{secnumdepth}{0}
+
+%%% Use protect on footnotes to avoid problems with footnotes in titles
+\let\rmarkdownfootnote\footnote%
+\def\footnote{\protect\rmarkdownfootnote}
+
+%%% Change title format to be more compact
+\usepackage{titling}
+
+% Create subtitle command for use in maketitle
+\newcommand{\subtitle}[1]{
+  \posttitle{
+    \begin{center}\large#1\end{center}
+    }
+}
+
+\setlength{\droptitle}{-2em}
+  \title{Predicting Restaurant Failure Using Yelp Data}
+  \pretitle{\vspace{\droptitle}\centering\huge}
+  \posttitle{\par}
+  \author{}
+  \preauthor{}\postauthor{}
+  \predate{\centering\large\emph}
+  \postdate{\par}
+  \date{November 17, 2015}
+
+
+
+\begin{document}
+
+\maketitle
+
+
+\subsection{Introduction}\label{introduction}
+
+Restaurants have one of the highest business failure rates of all the
+retail and service industries, with a 30\% failure rate commonly
+accepted as the norm. Some of the macro factors associated with
+restaurant failure include the economy, federal and local legislation,
+climate and natural events, regional and urban planning, changing
+cultural factors, and new competition. There are also many
+business-related micro factors associated with restaurant failure,
+including lack of capital, lack of industry experience, poor leadership,
+lack of cost controls, and high fixed costs. Other micro factors that
+contribute to restaurant failure include location (not just the physical
+site, but the demographics of the surrounding area as well), failing to
+follow the 12 Ps of restaurant branding (Place, Product, Price, People,
+Promotion, Promise, Principles, Props, Production, Performance,
+Positioning and Press), and even the name of the restaurant (restaurants
+with names that are brief, descriptive and attractive are more likely to
+succeed). For a more detailed discussion, please see
+\url{http://hospitality.ucf.edu/files/2011/08/DPI-Why-Restaurants-Fail.pdf}
+
+The primary question of interest for this project is to attempt to
+identify drivers of restaurant failure (i.e., predictors of restaurants
+that are no longer in business) using Yelp data. Given that Yelp data
+does not contain strong predictors such as economic information, the
+goal is to build a model that predicts restaurant failure using only
+business and review data.
+
+\subsection{Methods}\label{methods}
+
+\subsubsection{Understanding the Problem and the
+Dataset}\label{understanding-the-problem-and-the-dataset}
+
+The data for this project was part of Round 6 of the
+\href{http://www.yelp.com/dataset_challenge}{Yelp Dataset Challenge},
+which consists of information about businesses from 10 cities in 4
+countries and includes:
+
+\begin{itemize}
+\itemsep1pt\parskip0pt\parsep0pt
+\item
+  Over 1.5M reviews by 366K users for 61K businesses, and
+\item
+  Over 481K business attributes such as hours, parking, ambience, etc.
+\end{itemize}
+
+Of the five files included in the Yelp dataset (business, checkins,
+reviews, tips, and users), only the business and review data files will
+be used in this project. For the purposes of predicting restaurant
+failure, the target variable will be whether or not a restaurant is open
+for business (coded `Yes' for not in business and `No' for in business
+so the model will predict failure rather than success), and the
+predictor variables will be a combination of business attributes, review
+data, and feature-engineered variables.
+
+\subsubsection{Pre-Processing the Data}\label{pre-processing-the-data}
+
+A total of 21,799 restaurants and 990,627 restaurant reviews were
+extracted from the business and review data files for further
+processing, based on the presence of the word `Restaurant' in the
+business category variable.
+\href{https://en.wikipedia.org/wiki/Types_of_restaurant}{Four restaurant
+types} are represented in the data set: fast food, fast casual, casual,
+and fine dining. Variables with greater than 50\% missing values were
+removed from the dataset, and all missing values in the remaining
+variables were recoded to 0. All character variables were then recoded
+to dummy variables with the \texttt{dummyVars} function in the
+\texttt{caret} package using the \texttt{fullRank = TRUE} option to
+avoid creating linear dependencies.
+
+\subsubsection{Feature Engineering}\label{feature-engineering}
+
+Seven variables were feature-engineered for the predictive model. First,
+a total of 80 different restaurant categories were identified in the
+business category variable (from Afghan to Vietnamese). Second, a new
+city variable identifying the 10 cities in the dataset (Canada:
+Montreal, Waterloo; Germany: Karlsruhe; US: Charlotte, Las Vegas,
+Madison, Phoenix, Pittsburgh, Urbana-Champaign; UK: Edinburgh) was
+created by performing a \emph{k}-means cluster analysis of the
+restaurants' latitude and longitude. These two variables were then
+converted to continuous variables using the
+\href{http://www.sciencedirect.com/science/article/pii/S0167923615000275}{Weight
+of Evidence (WOE) transformation}. For the binary classification problem
+in this project, WOE can be defined as
+\(WOE^X_i = ln (C^X_i / TC) / (N^X_i / TN))\) where \(TC\) and \(TN\)
+are the total number of closed and open restaurants, respectively, and
+\(C^X_i\) and \(N^X_i\) are the number of closed and open restaurants
+for the \(i\)th value of attribute \(X\).
+
+Third, a sentiment analysis of the review verbatims was performed based
+on Jeffrey Breen's
+\href{https://github.com/jeffreybreen/twitter-sentiment-analysis-tutorial-201107}{Twitter
+sentiment analysis tutorial} using Hu \& Liu's
+\href{https://www.cs.uic.edu/~liub/FBS/sentiment-analysis.html\#lexicon}{opinion
+lexicon}, where an overall sentiment score is computed based on the
+number of positive words minus the number of negative words. A
+normalized mean sentiment score was then computed for each restaurant by
+dividing the sentiment score by the review length and taking the mean
+across all reviews. The remaining feature-engineered variables for each
+restaurant were mean review length (number of words), restaurant name
+length (number of words), percent of review verbatims with the word
+`manager' or `management' (hypothesized to be an indicator of poor
+service), and percent of one-star reviews.
+
+\subsubsection{Selecting the Modeling
+Algorithm}\label{selecting-the-modeling-algorithm}
+
+A gradient boosted decision tree classification model was selected as
+the modeling algorithm for this project. Gradient boosted decision trees
+fit many large or small trees to reweighted versions of the training
+data, and classify on the target variable by weighted majority vote.
+Tianqi Chen's eXtreme Gradient Boosting
+\href{https://github.com/dmlc/xgboost}{(\texttt{XGBoost})} is a fast and
+efficient implementation of
+\href{https://en.wikipedia.org/wiki/Gradient_boosting}{gradient
+boosting} framework. \texttt{XGBoost} yields accurate predictions for
+most data sets, as evidenced in its use by several recent
+\href{https://github.com/dmlc/xgboost\#whats-new}{Kaggle competition
+winners}.
+
+\subsubsection{Parameter Tuning Through
+Cross-Validation}\label{parameter-tuning-through-cross-validation}
+
+First, the modeling dataset was split 60/20/20 into training, test, and
+validation sets using the \texttt{createDataPartition} function in the
+\texttt{caret} package in order to preserve the overall class
+distribution of the data. Next, a gradient boosted decision tree
+classification model was fit to the training data using the
+\texttt{xgboost} package with 10-fold cross validation repeated 5 times.
+The final parameters for the optimal model were \texttt{nrounds} = 150,
+\texttt{max\_depth} = 3, and \texttt{eta} = 0.3. Predictions were
+computed on the test set and a confusion matrix was generated for model
+evaluation. A second set of predictions was then computed on the
+validation set.
+
+\subsubsection{Building the Model}\label{building-the-model}
+
+In order to account for class imbalance in the dataset (i.e., the low
+proportion of restaurants that failed compared to those that did not),
+an alternate threshold for the predicted probability was computed using
+\href{http://www.researchgate.net/publication/8308935_Youden_WJIndex_for_rating_diagnostic_tests._Cancer_3\%281\%29_32-35}{Youden's
+\emph{J} index}, which measures the proportions of correctly predicted
+samples for both the event and nonevent groups and can be defined as
+\(J = Sensitivity + Specificity - 1\). A new set of predictions was then
+computed using the alternate threshold and a confusion matrix was
+generated to evaluate the final model.
+
+\subsection{Results}\label{results}
+
+\subsubsection{Exploratory Data
+Analysis}\label{exploratory-data-analysis}
+
+The overall prevalence of restaurant failure in the Yelp dataset was
+19.8\%, but varies widely by city, with only 2.1\% failure in Karlsruhe
+but 24.6\% failure in Urbana-Champaign. As a result, city should be a
+important predictor in the final model.
+
+\begin{verbatim}
+##        
+## Failed? Charlotte Edinburgh Karlsruhe Las Vegas Madison Montreal Phoenix
+##     Yes     0.185     0.142     0.021     0.226   0.215    0.093   0.236
+##     No      0.815     0.858     0.979     0.774   0.785    0.907   0.764
+##        
+## Failed? Pittsburgh Urbana-Champaign Waterloo
+##     Yes      0.180            0.246    0.066
+##     No       0.820            0.754    0.934
+\end{verbatim}
+
+Restaurant failure also varies widely by restaurant category, ranging
+from 0\% for bistros to 58.1\% for Cuban restaurants. The top five
+restaurant categories with the highest failure percentage are shown
+below. Restaurant category should also be an important predictor in the
+final model.
+
+\begin{verbatim}
+##     Category Failed?
+## 45     Cuban   0.581
+## 48   Russian   0.467
+## 39     Cajun   0.422
+## 47 Soul Food   0.419
+## 2      Irish   0.400
+\end{verbatim}
+
+Finally, there does appear to be a linear relationship between name
+length and restaurant failure: restaurants with 6 or more words in the
+name have a failure rate nearly twice as high as those with only
+one-word names (25.8\% vs.~13.6\%).
+
+\begin{verbatim}
+##        
+## Failed?     1     2     3     4     5     6
+##     Yes 0.136 0.192 0.214 0.210 0.258 0.258
+##     No  0.864 0.808 0.786 0.790 0.742 0.742
+\end{verbatim}
+
+\subsubsection{Model Building}\label{model-building}
+
+The confusion matrix and evaluation diagnostics for the predictions of
+the tuned model on the test set are shown below. The overall accuracy
+was 85.3\%, which is slightly better than the no-information rate of
+80.2\%. A kappa value of 0.457 suggests moderate agreement. However, the
+model has low sensitivity (43.2\%), which suggests that the model has
+trouble predicting restaurant failure due to the class imbalance of the
+target variable and lack of strong predictors in the model.
+
+\begin{verbatim}
+##           Reference
+## Prediction  Yes   No
+##        Yes  373  149
+##        No   491 3347
+\end{verbatim}
+
+\begin{verbatim}
+##     Accuracy        Kappa AccuracyNull 
+##    0.8532110    0.4572203    0.8018349
+\end{verbatim}
+
+\begin{verbatim}
+## Sensitivity Specificity 
+##   0.4317130   0.9573799
+\end{verbatim}
+
+While the issue of strong predictors cannot be addressed with the data
+on hand, the class imbalance can be addressed by adjusting the cutoff
+value for the predicted probabilities, which is set to 50\% by default.
+Using an alternate cutoff of 20.5\% (i.e., probabilities greater than
+0.205 are called events) based on Youden's \emph{J} index increases the
+sensitivity of the model from 43.1\% to 76.5\%.
+
+\begin{verbatim}
+##   threshold specificity sensitivity 
+##   0.2053138   0.7854691   0.7659328
+\end{verbatim}
+
+The confusion matrix for the model predictions on the validation set
+using the alternate threshold is shown below. The final model clearly
+does a much better of job of predicting restaurant failure while
+achieving a better balance between sensitivity and specificity.
+
+\begin{verbatim}
+##           Reference
+## Prediction  Yes   No
+##        Yes  661  750
+##        No   202 2746
+\end{verbatim}
+
+A dotplot of variable importance in the final model is shown below. The
+top 5 predictors are review count, review length, city, restaurant
+category, and the business attribute `Good For Dinner'.
+
+\includegraphics{capstone_report_files/figure-latex/unnamed-chunk-7-1.pdf}
+
+Restaurants that are no longer in business tend to have fewer but longer
+reviews on average.
+
+\begin{verbatim}
+##   Failed? Review.Count Review.Length
+## 1     Yes     26.37069      704.6122
+## 2      No     55.45143      595.0459
+\end{verbatim}
+
+Restaurants that are flagged as `Good For Dinner' have a failure rate
+nearly twice as high compared to those that are not (28.1\% vs 17.0\%).
+
+\begin{verbatim}
+##        
+## Failed?     0     1
+##     Yes 0.170 0.281
+##     No  0.830 0.719
+\end{verbatim}
+
+\subsection{Discussion}\label{discussion}
+
+The primary question of interest for this project was to identify
+drivers of restaurant failure using Yelp review data. Using a powerful
+prediction algorithm in the form of gradient boosted decision trees
+resulted in a predictive model with reasonably high sensitivity after
+the model was adjusted for class imbalance. As a result, it was possible
+to answer the primary question of interest despite the lack of strong
+predictors in the dataset. It is interesting to note that five of the
+seven feature-engineered variables were among the top 10 drivers in
+terms of variable importance. Without feature engineering it is doubtful
+that an accurate predictive model could have been achieved.
+
+Review count and review length as the top two drivers of restaurant
+failure was unexpected. Fewer reviews on average for failed restaurants
+is perhaps not too surprising, as review count could be considered to be
+a proxy for popularity. However, the finding that reviews for failed
+restaurants are over 100 words longer on average compared to reviews of
+successful restaurants suggests that longer reviews tend to express
+concern rather than praise.
+
+The city and restaurant category variables played an important role in
+predicting restaurant failure, as initially hypothesized. However, the
+prevalence of restaurant failure in the Canadian and German cities was
+much lower than the other cities in the dataset, and not even close to
+the 30\% rate considered to be the industry norm. As a result, while
+city was one of the top five drivers of restaurant failure identified by
+the model, removing these three cities from the model would likely have
+resulted in a much lower importance score for the city variable. The
+restaurant category variable suggests that restaurants with
+non-traditional cuisines such as Cuban, Russian, Cajun and Soul Food run
+the highest risk of failure. The `Good for Dinner' flag suggests that
+restaurants at the higher end of the price scale (i.e., casual and fine
+dining) run the highest risk of failure.
+
+In terms of further analysis, it would be interesting to see if the
+relationship between business failure, review count and review length
+identified in this project generalizes to other businesses in other
+cities. While an analysis of Yelp reviewers themselves was not
+considered in this project, a follow-up analysis of review length and
+rating by reviewer would also be an interesting analysis.
+
+\end{document}
