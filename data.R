@@ -64,7 +64,7 @@ for (i in list.names) {
 df1[df1 == 'TRUE'] <- 1
 df1[df1 == 'FALSE'] <- 0
 
-# record character variables to numeric
+# recode character variables to numeric
 char.names <- names(df1)[28:30]
 for (i in char.names) {
     df1[[i]] <- as.numeric(df1[[i]])
