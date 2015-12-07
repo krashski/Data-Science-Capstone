@@ -1,8 +1,5 @@
 #### MODEL BUILDING
 
-# set the working directory
-setwd('/Users/russ/Documents/Coursera/Data Science Specialization/Capstone Project')
-
 # load RDS
 df.final <- readRDS('dffinal.RDS')
 
